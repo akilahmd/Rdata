@@ -1,5 +1,5 @@
 ---
-title: "Linear Regression Vignette"
+title: "Linear Regression"
 author: "Aqeel Ahmed,Marhawi Tewolde"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
@@ -18,13 +18,19 @@ The main purpose of developing this package was to develop a Linreg function tha
 
 This function is taking two arguments(formula and data), and is performing the following calculations:
 
-  *Regression Coefficients
-  *Fitted Values
-  *The Residuals
-  *Degrees of Freedom
-  *Residual Varience
-  *Varience of Regression Coefficients
-  *T-values
+  1.Regression Coefficients
+  
+  2.Fitted Values
+  
+  3.The Residuals
+  
+  3.Degrees of Freedom
+  
+  4.Residual Varience
+  
+  5.Varience of Regression Coefficients
+  
+  6.T-values
   
 The following code shows the calculations Performed by linreg function:
 ```
@@ -44,21 +50,21 @@ linreg<-function(formula,data)
 ```
 
 
-  
 
-
-## Imoprtant funtions
+## Imoprtant Funtions
 
 Mentioning some of the important functions incorporated with Lin_Class
 
   *Coefficients()
+  
   *Resid()
+  
   *Pred()
   
 The code for the above mentioned function:
   
    
-```{r}
+```
  resid = function() {
       return(resd)
     }
@@ -68,5 +74,86 @@ The code for the above mentioned function:
     coef = function() {
       return(resvariance) 
     }
+```
+
+
+##Plot_Class
+We have build a seperate Class for plots, The plot() functions in this class are delivering two plots.
+
+1. First plot is between Fitted values (on x-axis) and Residuals (on y-axis).
+
+2. Second plot is between Fitted Values (on x-axis) and Standard Residuals (on y-axis).
+
+```
+plot_class <- setRefClass(
+  "plot_class",
+  fields = list(
+    D1 = "data.frame",
+    D2 = "data.frame"
+  ),
+  methods = list(
+    plot = function() {
+      library(gridExtra)
+      graf1<-ggplot(data=D1,aes(x = x, y = y))+
+        ggtitle("residuals Vs Fitted ")+
+        xlab("fitted_values")+
+        ylab("residuals")+
+        geom_point()+geom_smooth(aes(col = "red"), method = "lm")
+      
+      graf2<-ggplot(data=D2, aes(x = x, y = y))+
+        ggtitle("scale location ")+
+        xlab("fitted_values")+
+        ylab("standard_residuals")+
+        geom_point()+geom_smooth(aes(col = "red"), method = "lm")
+      
+      grid.arrange(graf1,graf2)
+    })
+)
+```
+##Example for Running the Plots
+```
+testplots<-linreg(Petal.Length~Species,iris)
+testplots$plot$plot()
+```
+
+## Unit Tests
+
+We use a well-known dataset of "iris" and run the functions of lm() to fit a linear model and create unit tests, compairing the results of our function linreg() and the returning values of the lm().
+
+```
+library(testthat)
+library(Regression)
+
+
+test_that("Checking if the output is same",{
+  
+  expect_that(as.numeric(linreg(formula = as.formula(Petal.Length ~ Petal.Width), data = iris)$formulas$beta),
+              equals(as.numeric(lm(formula =as.formula(Petal.Length ~ Petal.Width), data = iris)$coefficients)))
+  
+  expect_that(as.numeric(linreg(formula =as.formula(Petal.Length ~ Petal.Width), data =iris)$formulas$resd),
+              equals(as.numeric(lm(formula =as.formula(Petal.Length ~ Petal.Width), data = iris)$residuals)))
+  
+  expect_that(as.numeric(linreg(formula =as.formula(Petal.Length ~ Petal.Width), data =iris)$formulas$fitted),
+              equals(as.numeric(lm(formula =as.formula(Petal.Length ~ Petal.Width), data = iris)$fitted.values)))
+  
+  expect_that(linreg(formula =as.formula(Petal.Length ~ Petal.Width), data = iris)$formulas$df,
+              equals(148))
+  
+  
+}
+          )
+
+```
+
+## More Examples for Running Functions/Formulas
+
+```
+tests<-linreg(Petal.Length~Species,iris)
+
+tests$formulas$print()
+tests$formulas$resid()
+tests$formulas$summary()
+tests$formulas$pred()
+
 ```
 

@@ -1,3 +1,4 @@
+
 lin_class <- setRefClass(
   "lin_class",
   fields = list(
@@ -16,14 +17,7 @@ lin_class <- setRefClass(
       beta
       
     },
-    plot = function() {
-      library ( ggplot2 )
-      
-        ggplot ( data = iris) +
-        aes(x=ls$fitted,y =ls$resd ) +
-        geom_line()
-      
-    },
+    
     resid = function() {
       return(resd)
     },
@@ -39,6 +33,6 @@ lin_class <- setRefClass(
       colnames(mat) <- c('Estimate', 'Std. Error', 't value')
       rownames(mat) <- names(beta)
      print.table(as.table(mat))
-      cat('\nResidual standard error:', resvariance, 'on', df, 'degress of freedom', sep = ' ')
+      cat('\n Residual standard error:', resvariance, 'on', df, 'degress of freedom', sep = ' ')
     })
 )
