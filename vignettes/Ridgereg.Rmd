@@ -1,0 +1,111 @@
+---
+title: "Ridge Regression"
+author: "Aqeel,Merhawi"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+# Ridge Regression
+
+Ridge Regression is a technique for analyzing multiple regression data that suffer from
+multicollinearity. When multicollinearity occurs, least squares estimates are unbiased, 
+but their variances are large so they may be far from the true value.
+
+1. Ridge Regression Function
+
+```
+ridgereg<- function(formula, data, lambda)
+{
+  stopifnot(formula == as.formula(formula), is.data.frame(data),is.numeric(lambda))
+  x<-model.matrix(formula,data)
+  y<-all.vars(formula)[1]
+  y<-as.matrix(data[y])
+  i<-ncol(x)
+  rid_beta<-as.vector(solve((t(x)%*%x)+diag( x= lambda, nrow = i, ncol = i )*diag(i))%*%t(x)%*%y)
+  rid_fitted<-as.vector(x%*%rid_beta)
+  ridobject <- ridgereg_class$new(formula = as.character(formula),
+                            rid_beta=rid_beta ,
+                            rid_fitted=rid_fitted)
+  return(ridobject)
+  
+}
+```
+## Ridge Regression class
+
+```
+ridgereg_class <- setRefClass (
+  "ridgereg_class",
+  fields = list(
+    formula = "character",
+    rid_beta = "numeric",
+    rid_fitted = "numeric",
+    lamda = "numeric"
+    ),
+  methods = list(
+    
+    ridge_coef = function() {
+      return(rid_beta) 
+    })
+)
+```
+
+## Unit Tests for Ridge Regression
+
+Running the functions of lmridge() to fit a regression model with lambda and create unit tests, compairing the results of our function ridgereg() with the returning values of the lmridge(). Apart from comparing the output of the function, there are also some test to check the input type of the arguments passed to the function.
+
+```
+test_that("Checking if the output is same",{
+  
+  expect_that(as.numeric(ridgereg(formula = Petal.Length ~ Species , data = iris,lambda = 0)$rid_beta)[1],
+              equals(as.numeric(coef(lm.ridge(formula = Petal.Length ~ Species, data = iris,lambda = 0))[1])))
+  expect_that(as.numeric(ridgereg(formula = Petal.Length ~ Species , data = iris,lambda = 0)$rid_beta)[2],
+              equals(as.numeric(coef(lm.ridge(formula = Petal.Length ~ Species, data = iris,lambda = 0))[2])))
+  
+  }
+)
+test_that('Expecting error for wrong output',{
+  expect_error(ridgereg(formula = as.formula(Petal.Length ~ Petal.Width), data = iris,lambda = 'r'))
+  expect_error(ridgereg(formula = as.formula(k), data = iris,lambda = 0))
+  expect_error(ridgereg(formula = as.formula(Petal.Length ~ Petal.Width), data = 0,lambda = 'r'))
+}
+)
+```
+## Handeling Large Data Sets with Dplyr
+
+Creating a function that is visualize_airport_delays() without any arguments that creates a plot that visualizes the mean delay of flights for di↵erent airports by longitude and latitude using ggplot2. 
+
+```
+visualize_airport_delays<-function(){
+data("flights")
+data("airports")
+ddelay <- select(flights, origin,dep_delay)
+colnames(ddelay) <- c("new_airports","dminutes")
+adelay <- select(flights, dest, arr_delay)
+colnames(adelay) <- c("new_airports","dminutes")
+bind_delays<-bind_rows(ddelay,adelay)
+grouped_delays<-arrange(bind_delays,new_airports)
+
+#Calculating mean delays,joining data sets, and filtering
+grouped_mean<-grouped_delays %>%
+  group_by(new_airports) %>%
+  summarise(mean_delay = mean(dminutes, na.rm= TRUE))%>%
+  left_join(airports,by=c("new_airports"="faa"))  %>% 
+  filter(!is.na(mean_delay)) %>%  filter(!is.na(lon)) %>% filter(!is.na(lat))
+
+#Ploting 
+us<-map_data("usa")
+
+delayplot<-ggplot(us,aes(x=long, y=lat,group = group)) +geom_polygon() +
+  geom_point(data=grouped_mean,aes(x=lon,y=lat,group = mean_delay ,color=mean_delay)) + 
+  scale_colour_gradient(high = "blue",low="yellow")+
+  labs(title= " Map of average delay ", y = "Latitude", x ="Longitude") 
+
+return(delayplot)
+
+}
+```
+
