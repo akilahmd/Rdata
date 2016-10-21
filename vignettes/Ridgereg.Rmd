@@ -108,4 +108,51 @@ return(delayplot)
 
 }
 ```
+## Predictions for Boston Housing.
 
+We split our data in 75 percent in training set and 25 percent for testing.
+
+```
+ind<- createDataPartition(BostonHousing$medv, p = .75, 
+                          list = FALSE, 
+                          times = 1)
+tra_data<-BostonHousing[ind,]      #split the data 75/25%
+val_data<-BostonHousing[-ind,]
+nrow(tra_data)                    #381 observations on training data
+nrow(val_data)                    # 125 observations on test data.
+```
+The model that we fit using forward selection.
+
+```
+model1 <- train(medv ~ ., data = tra_data, method = "leapForward")
+prediction1<- predict(model1,val_data)  #prediction of the medv on the unseen data using model1
+plot1<-plot(model1)                     #plot of the model in the training.
+plot2<-plot(prediction1)                #plot of prediction using model1.
+
+```
+
+When we use our function with different lambdas, the best performing model that we found is when the lambda is zero.
+
+```
+#fitting a model using our function with lambda =0 and using the bostonhousing data
+
+our_model<-ridgereg(medv~.,data = tra_data,lambda = 0)
+our_predic1<- our_model$rid_fitted
+print(our_predic1)
+```
+The final value used for lambda is zero, and it is done by using RMSE in order to select the optimal model using the smalled value.
+
+```
+fitControl <- trainControl(
+  method = "repeatedcv",
+  number = 10,
+  repeats = 10)
+
+fit_ridgereg <- train(medv~ .,data= tra_data, method="ridge", trControl = fitControl,
+                  tuneGrid= expand.grid(lambda=seq(0,8,.5)) ) #http://finzi.psych.upenn.edu/library/AppliedPredictiveModeling/chapters/06_Linear_Regression.R
+
+print(fit_ridgereg)
+ggplot(fit_ridgereg)
+
+```
+So predicting using the three models we found that, the optimum performance is when lambda is zero, in our case linreg function is the best method for the model.
